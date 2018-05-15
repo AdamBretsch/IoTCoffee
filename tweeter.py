@@ -1,6 +1,17 @@
 #!/usr/bin/env python3
 
 import time, tweepy, json, datetime
+import Adafruit_BBIO.GPIO as GPIO
+
+ON ="GP0_6"  # GP0 for relays
+OFF ="GP0_5"
+
+# Set the GPIO pins:
+GPIO.setup(ON,    GPIO.OUT)
+GPIO.setup(OFF,    GPIO.OUT)
+
+GPIO.output(ON, 0)
+GPIO.output(OFF, 0)
 
 cfg = { 
     "consumer_key"        : "ADeBhHXYOgoNXgagWe7ZjRB3C",
@@ -17,6 +28,22 @@ tweet = "This is a test tweet: http://adambretsch.com"
 
 #print(tweet)
 #status = twitter.update_status(status=tweet)
+
+def makeCoffee():
+  print("Starting Coffee")
+
+  #Turn on coffee maker
+  GPIO.output(ON, 1)
+  time.sleep(1)
+  GPIO.output(ON,0)
+  
+  time.sleep(5)
+
+  #Turn off coffee maker
+  GPIO.output(OFF, 1)
+  time.sleep(1)
+  GPIO.output(OFF,0)
+
 
 class MyStreamListener(tweepy.StreamListener):
 
@@ -38,7 +65,11 @@ class MyStreamListener(tweepy.StreamListener):
               timedone = datetime.datetime.now() + datetime.timedelta(minutes=15)
               message = "Making you coffee now, will be done at " + str(timedone)
               twitter.send_direct_message(user_id=userID, text=message)
-              print("Make the Coffee!")
+              makeCoffee()
+              message = "Coffee is done at " + str(datetime.datetime.now())
+              twitter.send_direct_message(user_id=userID, text=message)
+           else:
+             print("Cannot make coffee, user not followed")
 
     def on_error(self, status_code):
         if status_code == 420:
